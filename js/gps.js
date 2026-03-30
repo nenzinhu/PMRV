@@ -48,10 +48,17 @@ function gps_obterLocalizacao() {
         return;
     }
 
-    const btn = document.getElementById('btn-gps-localizar');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '⌛ Localizando...';
-    btn.disabled = true;
+    // Tentar identificar qual botão disparou a ação para dar feedback
+    const btnHome = document.querySelector('.btn-gps-minimal[data-click="gps_obterLocalizacao()"]');
+    const btnForm = document.getElementById('btn-gps-localizar');
+    const activeBtn = btnForm || btnHome;
+    
+    let originalText = "";
+    if (activeBtn) {
+        originalText = activeBtn.innerHTML;
+        activeBtn.innerHTML = '⌛ Localizando...';
+        activeBtn.disabled = true;
+    }
 
     navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -64,24 +71,27 @@ function gps_obterLocalizacao() {
                 const rodoviaEl = document.getElementById('pmrv_rodovia');
                 const kmEl = document.getElementById('pmrv_km');
                 
+                // Formatar KM com 3 casas (ex: 12,200)
+                const kmStr = resultado.km.toFixed(3).replace('.', ',');
+
                 if (rodoviaEl) {
                     rodoviaEl.value = resultado.rodovia;
-                    // Forçar atualização da cidade e lógica do PMRv
                     if (typeof pmrv_verificarRodovia === 'function') pmrv_verificarRodovia();
                 }
                 if (kmEl) {
-                    // Formatar KM com 3 casas para precisão de metros, mas exibindo conforme pedido
-                    kmEl.value = resultado.km.toFixed(3).replace('.', ',');
+                    kmEl.value = kmStr;
                     if (typeof pmrv_atualizar === 'function') pmrv_atualizar();
                 }
 
-                alert(`📍 Localização Identificada!\n\nRodovia: ${resultado.rodovia}\nKM: ${resultado.km.toFixed(3)}\nPrecisão do GPS: ${accuracy.toFixed(0)} metros.`);
+                alert(`📍 Localização Identificada!\n\n🛣️ Rodovia: ${resultado.rodovia}\n🏁 KM: ${kmStr}\n\n🎯 Precisão: ${accuracy.toFixed(0)} metros.`);
             } else {
-                alert("Você não parece estar próximo de uma das rodovias mapeadas (SC-401, 405, 406, 407, 281).");
+                alert(`Você está em:\nLat: ${latitude.toFixed(5)}\nLng: ${longitude.toFixed(5)}\n\nNenhuma rodovia estadual de SC foi identificada num raio de 1km.`);
             }
 
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            if (activeBtn) {
+                activeBtn.innerHTML = originalText;
+                activeBtn.disabled = false;
+            }
         },
         (err) => {
             let msg = "Erro ao obter GPS";
@@ -90,8 +100,10 @@ function gps_obterLocalizacao() {
             else if (err.code === 3) msg = "Tempo esgotado ao tentar obter localização.";
             
             alert(msg + " (" + err.message + ")");
-            btn.innerHTML = originalText;
-            btn.disabled = false;
+            if (activeBtn) {
+                activeBtn.innerHTML = originalText;
+                activeBtn.disabled = false;
+            }
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
@@ -105,8 +117,11 @@ function gps_identificarRodoviaKM(lat, lng) {
     let melhorKm = 0;
     let menorDistancia = Infinity;
 
-    for (const rodovia in GPS_RODOVIAS) {
-        const pontos = GPS_RODOVIAS[rodovia];
+    // Tentar primeiro nos dados de SC (mapeamento completo)
+    const bancoRodovias = window.GPS_RODOVIAS_SC || GPS_RODOVIAS;
+
+    for (const rodovia in bancoRodovias) {
+        const pontos = bancoRodovias[rodovia];
         
         for (let i = 0; i < pontos.length - 1; i++) {
             const p1 = pontos[i];
@@ -131,8 +146,8 @@ function gps_identificarRodoviaKM(lat, lng) {
         }
     }
 
-    // Limite de 300 metros para considerar que o usuário está na rodovia
-    if (menorDistancia < 0.3) {
+    // Limite de 1.0 km para considerar que o usuário está na rodovia
+    if (menorDistancia < 1.0) {
         return { rodovia: melhorRodovia, km: melhorKm };
     }
     return null;
@@ -167,18 +182,18 @@ function gps_projetarPonto(px, py, ax, ay, bx, by) {
 }
 
 /**
- * Fun��o de TESTE: Simula uma localiza��o em uma das rodovias para fins de demonstra��o.
+ * Fun��o de TESTE: Simula uma localiza��o em uma das rodovias para fins de demonstra��o.
  */
 function gps_simularLocalizacao() {
     // Lista de pontos de teste (Pontos reais nas rodovias mapeadas)
     const pontosTeste = [
         { lat: -27.5000, lng: -48.4900, msg: 'Simulando SC-401 KM 10.2 (Saco Grande)' },
         { lat: -27.6550, lng: -48.4980, msg: 'Simulando SC-405 KM 2.8 (Rio Tavares)' },
-        { lat: -27.5955, lng: -48.7185, msg: 'Simulando SC-281 KM 8.5 (Sert�o do Maruim)' },
-        { lat: -27.4948, lng: -48.6582, msg: 'Simulando SC-407 KM 0.0 (Bigua�u Centro)' }
+        { lat: -27.5955, lng: -48.7185, msg: 'Simulando SC-281 KM 8.5 (Sert�o do Maruim)' },
+        { lat: -27.4948, lng: -48.6582, msg: 'Simulando SC-407 KM 0.0 (Bigua�u Centro)' }
     ];
 
-    // Escolhe um ponto aleat�rio
+    // Escolhe um ponto aleat�rio
     const ponto = pontosTeste[Math.floor(Math.random() * pontosTeste.length)];
     
     console.log('--- MODO TESTE ATIVADO ---');
@@ -187,7 +202,7 @@ function gps_simularLocalizacao() {
     const resultado = gps_identificarRodoviaKM(ponto.lat, ponto.lng);
     
     if (resultado) {
-        // Preencher campos no formul�rio PMRv
+        // Preencher campos no formul�rio PMRv
         const rodoviaEl = document.getElementById('pmrv_rodovia');
         const kmEl = document.getElementById('pmrv_km');
         const localPatEl = document.getElementById('pat_local');
@@ -204,7 +219,41 @@ function gps_simularLocalizacao() {
             localPatEl.value = resultado.rodovia + ', KM ' + resultado.km.toFixed(1);
         }
 
-        alert('?? MODO TESTE / SIMULA��O\n\n' + ponto.msg + '\n\nRodovia: ' + resultado.rodovia + '\nKM: ' + resultado.km.toFixed(3));
-    }
-}
+        alert('?? MODO TESTE / SIMULAO\n\n' + ponto.msg + '\n\nRodovia: ' + resultado.rodovia + '\nKM: ' + resultado.km.toFixed(3));
+        }
+        }
+
+        /**
+        * Preenche os selects de rodovias do sistema com os dados carregados de SC.
+        */
+        function gps_preencherSelects() {
+        const banco = window.GPS_RODOVIAS_SC;
+        if (!banco) return;
+
+        const selectIds = ['pmrv_rodovia', 'pat_manual_rodovia'];
+        const rodovias = Object.keys(banco).sort();
+
+        selectIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        // Limpar opções atuais (mantendo apenas as essenciais se necessário)
+        el.innerHTML = '';
+
+        rodovias.forEach(rod => {
+            const opt = document.createElement('option');
+            opt.value = rod;
+            opt.textContent = rod;
+            el.appendChild(opt);
+        });
+
+        // Adicionar opção "OUTRA" se for o select de patrulhamento
+        if (id === 'pat_manual_rodovia') {
+            const optOutra = document.createElement('option');
+            optOutra.value = 'OUTRA';
+            optOutra.textContent = '✏️ Outra...';
+            el.appendChild(optOutra);
+        }
+        });
+        }
 

@@ -20,13 +20,16 @@ document.addEventListener('DOMContentLoaded', function(){
   });
   PMRV.core.bindDeclarativeHandlers();
   PMRV.core.registerServiceWorker();
+  if (typeof window.gps_preencherSelects === 'function') {
+    window.gps_preencherSelects();
+  }
 });
 
 /* ---------------------------------------------------------------
    MÓDULO CORE
 --------------------------------------------------------------- */
 PMRV.core = (function() {
-  const SCREENS = ['home','assumir','envolvidos','pmrv','danos','relatorio','infracoes','help','ended','docs'];
+  const SCREENS = ['home','assumir','envolvidos','pmrv','danos','relatorio','infracoes','help','ended','docs','patrulhamento'];
 
   function go(name) {
     SCREENS.forEach(id => {
@@ -38,6 +41,12 @@ PMRV.core = (function() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Inicializar telas que precisam de setup
+    if (name === 'patrulhamento' && typeof window.pat_atualizarDataHora === 'function') {
+      window.pat_atualizarDataHora();
+    }
+    if (name === 'assumir' && typeof window.ass_init === 'function') {
+      window.ass_init();
+    }
     if (name === 'envolvidos' && document.getElementById('env_lista').children.length === 0) {
       if (typeof window.env_adicionar === 'function') window.env_adicionar();
     }
