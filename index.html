@@ -67,7 +67,7 @@
         </button>
 
         <button class="menu-card" data-color="red" data-click="go('patrulhamento')">
-          <div class="menu-icon"><span style="font-size:32px;">🚔</span></div>
+          <div class="menu-icon"><img src="patrulhamento.png" alt="Patrulhamento de Trânsito SC" class="menu-icon-img menu-icon-img-pat" /></div>
           <div class="menu-title">Patrulhamento de Trânsito SC</div>
           <div class="menu-desc">Registro rápido de placas e infrações</div>
           <span class="menu-arrow">›</span>
@@ -116,7 +116,7 @@
         </button>
 
         <button class="menu-card" data-color="purple" data-click="go('docs')">
-          <div class="menu-icon"><span style="font-size: 32px;">📚</span></div>
+          <div class="menu-icon"><img src="ctb.png" alt="Documentos Trânsito" class="menu-icon-img menu-icon-img-docs" /></div>
           <div class="menu-title">Documentos Trânsito</div>
           <div class="menu-desc">MBFT, CTB, Resoluções e Guias</div>
           <span class="menu-arrow">›</span>
@@ -215,31 +215,31 @@
                 <span>Código de Trânsito Brasileiro (Planalto)</span>
               </div>
             </a>
-            <a href="https://www.gov.br/transportes/pt-br/assuntos/transito/senatran/manual-brasileiro-de-fiscalizacao-de-transito" target="_blank" class="doc-link-item">
+            <a href="https://www.mbftransito.com.br/index.php?class=Indice&PHPSESSID_mbft=4f34d9bc57fa5bd4692ede77937cc0b8&_ga=GA1.1.257398547.1774893393&doe=s&_ga_50TV251JHF=GS2.1.s1774893392%24o1%24g1%24t1774893394%24j58%24l0%24h0" target="_blank" class="doc-link-item">
               <span class="doc-icon">📘</span>
               <div class="doc-info">
                 <strong>MBFT Digital</strong>
-                <span>Manual Brasileiro de Fiscalização (SENATRAN)</span>
+                <span>Manual Brasileiro de Fiscalização (Portal MBFT)</span>
               </div>
             </a>
-            <a href="https://www.in.gov.br/en/web/dou/-/resolucao-contran-n-996-de-15-de-junho-de-2023-490515153" target="_blank" class="doc-link-item">
+            <a href="https://www.gov.br/transportes/pt-br/assuntos/transito/conteudo-contran/resolucoes/Resolucao10202025.pdf" target="_blank" class="doc-link-item">
               <span class="doc-icon">🛵</span>
               <div class="doc-info">
                 <strong>Lei de Ciclomotores</strong>
-                <span>Resolução 996/23 - Regras e Definições</span>
+                <span>Resolução 1020/25 - Regras e Definições</span>
               </div>
             </a>
-            <a href="https://www.gov.br/transportes/pt-br/assuntos/transito/senatran/perguntas-frequentes-resolucao-contran-no-996-2023" target="_blank" class="doc-link-item">
+            <div class="doc-link-item" data-click="go('guia-ciclomotores')">
               <span class="doc-icon">💡</span>
               <div class="doc-info">
                 <strong>Guia Prático: Ciclomotores</strong>
-                <span>Perguntas Frequentes - Senatran</span>
+                <span>Resumo da Resolução 1020/2025</span>
               </div>
-            </a>
+            </div>
           </div>
         </div>
 
-        <!-- Fiscalização Técnica -->
+        <!-- Fiscalização Técnica (Inmetro) -->
         <div class="doc-group">
           <h3 class="field-label-orange">Fiscalização Técnica (Inmetro)</h3>
           <div class="doc-links-stack">
@@ -295,6 +295,95 @@
           </div>
         </div>
 
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       GUIA PRÁTICO: CICLOMOTORES (RES. 1020/25)
+  ============================================================ -->
+  <section id="screen-guia-ciclomotores" class="screen">
+    <div class="back-row">
+      <button class="btn" data-click="go('docs')">← Voltar</button>
+      <button class="btn btn-danger" data-click="go('ended')">Sair</button>
+    </div>
+    
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">🛵 Guia Prático: Ciclomotores</h2>
+          <p class="card-sub">Principais regras da Resolução CONTRAN nº 1.020/2025</p>
+        </div>
+      </div>
+
+      <div class="help-stack" style="margin-top: 16px;">
+        <p class="help-text" style="font-style: italic; margin-bottom: 20px; color: var(--primary);">
+          Com base na Resolução CONTRAN nº 1.020, de 1º de dezembro de 2025, aqui estão as principais perguntas e respostas sobre as novas regras para ciclomotores:
+        </p>
+
+        <section class="help-block">
+          <h3 class="help-title">O que é considerado um ciclomotor pela nova lei?</h3>
+          <p class="help-text">Veículo de duas ou três rodas com:</p>
+          <ul class="help-list">
+            <li><strong>Motor de combustão:</strong> até 50 cm³.</li>
+            <li><strong>Motor elétrico:</strong> potência máxima de até 4 kW.</li>
+            <li><strong>Velocidade máxima:</strong> até 50 km/h.</li>
+          </ul>
+        </section>
+
+        <section class="help-block">
+          <h3 class="help-title">Qual documento é necessário para conduzir?</h3>
+          <p class="help-text">Existem duas opções legais:</p>
+          <ul class="help-list">
+            <li><strong>ACC (Autorização para Conduzir Ciclomotor):</strong> específica para este veículo.</li>
+            <li><strong>CNH Categoria A:</strong> condutores habilitados na categoria A também estão aptos.</li>
+          </ul>
+        </section>
+
+        <section class="help-block">
+          <h3 class="help-title">Como funciona o processo para obter a ACC?</h3>
+          <p class="help-text">Processo semelhante ao da CNH, mas com facilidade prática:</p>
+          <ul class="help-list">
+            <li><strong>Etapas:</strong> requerimento, curso teórico, biometria, avaliações psicológica/física, exame teórico e prático.</li>
+            <li><strong>Diferencial:</strong> as aulas práticas são <strong>dispensadas</strong> nos processos exclusivos para ACC. O candidato pode fazer o exame prático logo após o teórico.</li>
+          </ul>
+        </section>
+
+        <section class="help-block">
+          <h3 class="help-title">Quais são os requisitos iniciais?</h3>
+          <ul class="help-list">
+            <li>Ser penalmente imputável.</li>
+            <li>Saber ler e escrever.</li>
+            <li>Possuir documento de identificação e CPF.</li>
+          </ul>
+        </section>
+
+        <section class="help-block">
+          <h3 class="help-title">Como é o curso teórico?</h3>
+          <ul class="help-list">
+            <li><strong>Carga Horária:</strong> definida pela entidade de ensino (sem mínimo fixo).</li>
+            <li><strong>Modalidades:</strong> presencial ou EaD (inclusive assíncrona).</li>
+            <li><strong>Exame:</strong> prova de 30 questões (mínimo 20 acertos).</li>
+          </ul>
+        </section>
+
+        <section class="help-block">
+          <h3 class="help-title">Qual a validade do documento?</h3>
+          <ul class="help-list">
+            <li><strong>Permissão (PPD):</strong> vale por um ano.</li>
+            <li><strong>ACC Definitiva:</strong> vinculada ao prazo do exame de aptidão física e mental.</li>
+          </ul>
+        </section>
+
+        <section class="help-block">
+          <h3 class="help-title">Exercício de Atividade Remunerada?</h3>
+          <p class="help-text">Sim. Pode-se incluir a observação de EAR na ACC, exigindo avaliação psicológica na renovação.</p>
+        </section>
+
+        <section class="help-block">
+          <h3 class="help-title">Onde o ciclomotor pode circular?</h3>
+          <p class="help-text">Em vias terrestres conforme o CTB, sendo o uso disciplinado pelo órgão com circunscrição sobre a via.</p>
+        </section>
       </div>
     </div>
   </section>
@@ -463,9 +552,6 @@
     </div>
   </section>
 
-  <!-- ============================================================
-       PATRULHAMENTO DE TRÂNSITO SC
-  ============================================================ -->
   <section id="screen-patrulhamento" class="screen">
     <div class="back-row">
       <button class="btn" data-click="go('home')">← Voltar</button>
@@ -476,78 +562,186 @@
       <div class="card-header">
         <div>
           <h2 class="card-title">🚔 Patrulhamento de Trânsito SC</h2>
-          <p class="card-sub">Registro rápido de veículos e infrações</p>
+          <p class="card-sub">Registro rápido de veículos e infrações em lote</p>
         </div>
       </div>
 
       <div class="form-grid">
-        <!-- Placa -->
-        <div class="form-field">
-          <label class="field-label">Placa do Veículo</label>
-          <input type="text" id="pat_placa" placeholder="ABC1234 ou ABC1D23" maxlength="8" style="text-transform: uppercase; font-weight: bold; font-size: 18px; text-align: center; letter-spacing: 2px;" data-input="pat_formatarPlaca(this)">
-        </div>
-
-        <!-- Localização GPS -->
-        <div class="form-field">
-          <label class="field-label">Localização (Rodovia/KM)</label>
-          <div style="display:flex; gap: 8px;">
-            <input type="text" id="pat_local" placeholder="Clique no GPS..." readonly style="flex:1;">
-            <button class="btn btn-primary" style="padding: 0 12px;" data-click="pat_obterGPS()">📍 GPS</button>
+        <!-- Data e Hora (Automáticos) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="form-field">
+            <label class="field-label">Data</label>
+            <input type="text" id="pat_data" readonly style="background: var(--surface); color: var(--muted); text-align: center;">
+          </div>
+          <div class="form-field">
+            <label class="field-label">Hora</label>
+            <input type="text" id="pat_hora" readonly style="background: var(--surface); color: var(--muted); text-align: center;">
           </div>
         </div>
 
-        <!-- Infrações Rápidas -->
+        <!-- Placa -->
         <div class="form-field">
-          <label class="field-label">Tipo de Infração</label>
-          <select id="pat_infracao_select" data-change="pat_onInfracaoChange()">
-            <option value="">-- Selecione a Infração --</option>
-            <option value="Cinto (Condutor/Passag.)|518-51 / 518-52|Grave|Art. 167">Cinto (Condutor/Passag.)</option>
-            <option value="Equipam. em Desacordo|663-71|Grave|Art. 230, X">Equipam. em Desacordo</option>
-            <option value="Desobedecer Agente|581-96|Grave|Art. 195">Desobedecer Agente</option>
-            <option value="Não Licenciado/Registrado|659-92|Gravíssima|Art. 230, V">Não Licenciado/Registrado</option>
-            <option value="Celular (Fone/Viva-voz)|736-62|Média|Art. 252, VI">Celular (Fone/Viva-voz)</option>
-            <option value="Celular (Segurar/Teclar)|763-31 / 763-32|Gravíssima|Art. 252, P.U.">Celular (Segurar/Teclar)</option>
-            <option value="Ultrapassar Linha Contínua|596-70|Gravíssima (5x)|Art. 203, V">Ultrapassar Linha Contínua</option>
-            <option value="Estacionar Acostamento|550-90|Leve|Art. 181, VII">Estacionar Acostamento</option>
-            <option value="Estac. Jardim Público|545-23|Grave|Art. 181, VIII">Estac. Jardim Público</option>
-            <option value="Restrição Peso/Dimensão|682-32|Grave|Art. 231, IV">Restrição Peso/Dimensão</option>
-            <option value="Lanterna/Luz Placa Queimada|667-00|Média|Art. 230, XXII">Lanterna/Luz Placa Queimada</option>
-            <option value="Placa Ilegível/Sem Visib.|658-00|Gravíssima|Art. 230, VI">Placa Ilegível/Sem Visib.</option>
-            <option value="MANUAL">✏️ Digitar Manualmente...</option>
-          </select>
+          <label class="field-label">Placa do Veículo</label>
+          <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+            <button class="btn btn-sm btn-primary" style="flex: 1;" data-click="pat_setModoPlaca('manual')">⌨️ Manual</button>
+            <button class="btn btn-sm" style="flex: 1;" data-click="pat_setModoPlaca('ocr')">📸 Câmera/OCR</button>
+          </div>
+          <div id="pat_placa_manual_wrap">
+            <input type="text" id="pat_placa" placeholder="ABC1234 ou ABC1D23" maxlength="8" style="text-transform: uppercase; font-weight: bold; font-size: 20px; text-align: center; letter-spacing: 2px;" data-input="pat_formatarPlaca(this)">
+          </div>
+          <div id="pat_placa_ocr_wrap" class="hidden">
+            <label class="foto-label" style="padding: 15px; border-style: dashed; border-color: var(--primary);">
+              <span style="font-size: 24px; margin-bottom: 5px;">📷</span> Escanear Placa
+              <input type="file" accept="image/*" capture="environment" style="display:none;" data-change="pat_simularOCR(this)">
+            </label>
+          </div>
         </div>
 
-        <!-- Campo Manual (Oculto) -->
-        <div id="pat_box_manual" class="form-field hidden">
-          <label class="field-label">Descrição Manual da Infração</label>
-          <input type="text" id="pat_infracao_manual" placeholder="Ex: Dirigir com apenas uma mão">
+        <!-- Localização (Rodovia/KM) -->
+        <div class="form-field">
+          <label class="field-label">Localização (Rodovia/KM)</label>
+          <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+            <button class="btn btn-sm btn-primary" id="btn-pat-local-gps" style="flex: 1;" data-click="pat_setModoLocal('gps')">📍 GPS</button>
+            <button class="btn btn-sm" id="btn-pat-local-manual" style="flex: 1;" data-click="pat_setModoLocal('manual')">✏️ Manual</button>
+          </div>
+          
+          <div id="pat_local_gps_box" style="display:flex; gap: 8px;">
+            <input type="text" id="pat_local" placeholder="Clique no GPS..." readonly style="flex:1; background: var(--surface);">
+            <button class="btn btn-primary" style="padding: 0 12px;" data-click="pat_obterGPS()">📍 GPS</button>
+          </div>
+
+          <div id="pat_local_manual_box" class="hidden" style="display:grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+            <select id="pat_manual_rodovia" data-change="pat_onRodoviaManualChange()">
+              <option value="SC-401">SC-401</option>
+              <option value="SC-402">SC-402</option>
+              <option value="SC-403">SC-403</option>
+              <option value="SC-404">SC-404</option>
+              <option value="SC-405">SC-405</option>
+              <option value="SC-406">SC-406</option>
+              <option value="SC-281">SC-281</option>
+              <option value="SC-407">SC-407</option>
+              <option value="OUTRA">✏️ Outra...</option>
+            </select>
+            <input type="text" id="pat_manual_km" placeholder="KM" maxlength="6" inputmode="decimal">
+            <input type="text" id="pat_manual_rodovia_outra" class="hidden" placeholder="Nome da Rodovia" style="grid-column: span 2;">
+          </div>
         </div>
 
-        <button class="btn btn-success btn-full" style="margin-top: 10px;" data-click="pat_salvarVeiculo()">💾 Salvar Veículo</button>
+        <!-- Guia Rápido de Infrações -->
+        <div class="form-field">
+          <label class="field-label">Guia Rápido de Infrações</label>
+          <div class="infra-quick-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 5px;">
+            <button class="infra-quick-card" data-click="pat_selectQuick('518-51')">
+              <span class="q-code">518-51</span>
+              <span class="q-name">Cinto de Seg.</span>
+              <span class="q-art">Art. 167</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('663-71')">
+              <span class="q-code">663-71</span>
+              <span class="q-name">Eq. Desacordo</span>
+              <span class="q-art">Art. 230, X</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('581-96')">
+              <span class="q-code">581-96</span>
+              <span class="q-name">Desob. Agente</span>
+              <span class="q-art">Art. 195</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('659-92')">
+              <span class="q-code">659-92</span>
+              <span class="q-name">N Licenc./Reg.</span>
+              <span class="q-art">Art. 230, V</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('736-62')">
+              <span class="q-code">736-62</span>
+              <span class="q-name">Cel. Viva-Voz</span>
+              <span class="q-art">Art. 252, VI</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('763-31')">
+              <span class="q-code">763-31</span>
+              <span class="q-name">Cel. Teclando</span>
+              <span class="q-art">Art. 252, PU</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('596-70')">
+              <span class="q-code">596-70</span>
+              <span class="q-name">Ultrap. Linha</span>
+              <span class="q-art">Art. 203, V</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('550-90')">
+              <span class="q-code">550-90</span>
+              <span class="q-name">Estac. Acost.</span>
+              <span class="q-art">Art. 181, VII</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('545-23')">
+              <span class="q-code">545-23</span>
+              <span class="q-name">Estac. Jardim</span>
+              <span class="q-art">Art. 181, VIII</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('667-00')">
+              <span class="q-code">667-00</span>
+              <span class="q-name">Luz Placa</span>
+              <span class="q-art">Art. 230, XXII</span>
+            </button>
+            <button class="infra-quick-card" data-click="pat_selectQuick('658-00')">
+              <span class="q-code">658-00</span>
+              <span class="q-name">Placa Ilegível</span>
+              <span class="q-art">Art. 230, VI</span>
+            </button>
+            <button class="infra-quick-card" style="background: rgba(245, 130, 32, 0.1); border-color: var(--primary);" data-click="pat_selectQuick('MANUAL')">
+              <span class="q-code" style="background: var(--primary); color: white;">✏️</span>
+              <span class="q-name" style="color: var(--primary);">Outra Infração</span>
+              <span class="q-art">Digitar Manual</span>
+            </button>
+          </div>
+          
+          <div id="pat_infra_manual_box" class="hidden" style="margin-top: 12px; padding: 12px; background: rgba(255,255,255,0.03); border: 1px dashed var(--primary); border-radius: 12px; display: grid; gap: 8px;">
+            <div>
+              <label class="field-label" style="font-size: 10px;">Descrição da Infração</label>
+              <input type="text" id="pat_manual_infra_nome" placeholder="Ex: Dirigir com apenas uma mão">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div>
+                <label class="field-label" style="font-size: 10px;">Código (Enquadr.)</label>
+                <input type="text" id="pat_manual_infra_codigo" placeholder="000-00">
+              </div>
+              <div>
+                <label class="field-label" style="font-size: 10px;">Artigo CTB</label>
+                <input type="text" id="pat_manual_infra_artigo" placeholder="Art. 000">
+              </div>
+            </div>
+          </div>
+          
+          <div id="pat_infra_display_box" style="margin-top: 10px;">
+            <label class="field-label">Infração Selecionada:</label>
+            <input type="text" id="pat_infracao_display" readonly style="font-size: 13px; font-weight: 700; background: rgba(245,130,32,0.05); color: var(--primary); border: 1px solid var(--primary);" value="Nenhuma selecionada">
+            <input type="hidden" id="pat_infracao_data">
+          </div>
+        </div>
+
+        <button class="btn btn-success btn-full" style="margin-top: 10px; padding: 16px; font-size: 16px; font-weight: 900;" data-click="pat_salvarVeiculo()">💾 REGISTRAR INFRAÇÃO</button>
       </div>
     </div>
 
     <!-- Lista de Veículos Salvos -->
     <div id="pat_lista_card" class="card mt-12 hidden">
       <div class="card-header">
-        <h3 class="field-label-orange">Veículos Registrados</h3>
-        <button class="btn btn-sm btn-danger" data-click="pat_limparTudo()">🗑️ Limpar Lista</button>
+        <h3 class="field-label-orange">Veículos em Lote</h3>
+        <button class="btn btn-sm btn-danger" data-click="pat_limparTudo()">🗑️ Limpar</button>
       </div>
       <div id="pat_lista_container" class="space-y-2">
         <!-- Itens salvos aparecem aqui -->
       </div>
       
       <div class="pt-4" style="display: flex; gap: 8px; margin-top: 16px;">
-        <button class="btn btn-primary flex-1" data-click="pat_gerarRelatorio()">🔄 Gerar Relatório</button>
+        <button class="btn btn-primary flex-1" style="flex:1" data-click="pat_gerarRelatorio()">🔄 Gerar Texto Consolidado</button>
       </div>
     </div>
 
     <!-- Resultado do Relatório -->
     <div id="pat_result_area" class="card mt-12 hidden">
       <div class="card-header">
-        <h3 class="field-label-orange">Relatório Consolidado</h3>
+        <h3 class="field-label-orange">Relatório de Patrulhamento</h3>
       </div>
-      <pre id="pat_result_text" style="white-space: pre-wrap; font-size: 12px; line-height: 1.5; background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border);"></pre>
+      <pre id="pat_result_text" style="white-space: pre-wrap; font-size: 12px; line-height: 1.5; background: var(--surface); padding: 12px; border-radius: 8px; border: 1px solid var(--border); color: var(--text);"></pre>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px;">
         <button class="btn btn-success" data-click="pat_whatsapp()">📲 WhatsApp</button>
         <button class="btn" data-click="pat_downloadTXT()">💾 Download TXT</button>
@@ -1378,6 +1572,7 @@
      SCRIPTS UNIFICADOS
 ============================================================ -->
   <script src="js/core.js"></script>
+  <script src="js/gps_data_sc.js"></script>
   <script src="js/gps.js"></script>
   <script src="js/patrulhamento.js"></script>
   <script src="js/assuncao.js"></script>
