@@ -13,6 +13,26 @@
 
     <link rel="stylesheet" href="css/inlined.css">
     <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Estilos para o Croqui Dinâmico */
+    .croqui-toolbar::-webkit-scrollbar { height: 4px; }
+    .croqui-toolbar::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+    
+    #croqui-svg g.selected rect,
+    #croqui-svg g.selected path {
+      stroke: #00ff00 !important;
+      stroke-width: 3px !important;
+    }
+    
+    #croqui-svg g.selected text {
+      fill: #00ff00 !important;
+    }
+
+    .croqui-icon-item:active {
+      background: rgba(245, 130, 32, 0.2) !important;
+      transform: scale(0.95);
+    }
+  </style>
 </head>
 
 <body>
@@ -105,6 +125,13 @@
           <div class="menu-icon"><img src="relatorio.png" class="menu-icon-img menu-icon-img-rel" alt="Relatório Completo"></div>
           <div class="menu-title">Relatório Completo</div>
           <div class="menu-desc">Envolvidos + Danos em um relatório</div>
+          <span class="menu-arrow">›</span>
+        </button>
+
+        <button class="menu-card" data-color="blue" data-click="go('croqui')">
+          <div class="menu-icon">📐</div>
+          <div class="menu-title">Croqui de Sinistro</div>
+          <div class="menu-desc">Diagrama interativo do acidente</div>
           <span class="menu-arrow">›</span>
         </button>
 
@@ -1387,6 +1414,62 @@
   </section>
 
   <!-- ============================================================
+       CROQUI DINÂMICO
+  ============================================================ -->
+  <section id="screen-croqui" class="screen">
+    <div class="back-row">
+      <button class="btn" data-click="go('home')">← Voltar</button>
+      <button class="btn btn-danger" data-click="go('ended')">Sair</button>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <h2 class="card-title">📐 Croqui Dinâmico de Sinistro</h2>
+          <p class="card-sub">Monte o diagrama técnico do acidente</p>
+        </div>
+      </div>
+
+      <!-- Barra de Ferramentas -->
+      <div class="croqui-toolbar" style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 8px;">
+        <button class="btn btn-sm btn-primary" data-click="croqui_adicionarVia('reta')">🛣️ Reta</button>
+        <button class="btn btn-sm btn-primary" data-click="croqui_adicionarVia('curva')">↩️ Curva</button>
+        <button class="btn btn-sm btn-primary" data-click="croqui_adicionarVia('cruzamento')">➕ Cruzamento</button>
+        <button class="btn btn-sm btn-amber"   data-click="croqui_girar()">🔄 Girar</button>
+        <button class="btn btn-sm btn-amber"   data-click="croqui_espelhar()">↔️ Inverter</button>
+        <button class="btn btn-sm btn-success" data-click="croqui_abrirModalIcones()">🚗 +Ícones</button>
+        <button class="btn btn-sm btn-danger"  data-click="croqui_limpar()">🗑️ Limpar</button>
+      </div>
+
+      <!-- Área do Canvas -->
+      <div id="croqui-container" style="width: 100%; height: 400px; background: #222; border: 2px solid var(--border); border-radius: 12px; position: relative; overflow: hidden; touch-action: none;">
+        <svg id="croqui-svg" width="100%" height="100%" style="display: block;">
+          <!-- Grade de fundo -->
+          <defs>
+            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#grid)" />
+          
+          <g id="croqui-vias"></g>
+          <g id="croqui-objetos"></g>
+        </svg>
+        
+        <!-- Instruções flutuantes -->
+        <div style="position: absolute; bottom: 8px; right: 8px; font-size: 10px; color: var(--muted); pointer-events: none;">
+          Arraste p/ mover • Use 2 dedos p/ girar/redimensionar
+        </div>
+      </div>
+
+      <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button class="btn btn-full" data-click="croqui_exportar()">📷 Salvar Imagem</button>
+        <button class="btn btn-whats btn-full" data-click="croqui_whatsapp()">📲 Enviar WhatsApp</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
        AJUDA
   ============================================================ -->
   <section id="screen-help" class="screen">
@@ -1550,6 +1633,59 @@
   </div>
 </div>
 
+<!-- Modal Croqui Icones -->
+<div id="croqui-modal-icones" class="v360-overlay" data-click="croqui_fecharModalOnBackdrop(event)">
+  <div class="v360-modal" style="max-width: 90%; width: 500px; max-height: 80vh; overflow-y: auto;">
+    <div class="card-header" style="padding: 0; margin-bottom: 15px;">
+      <h3 class="card-title">Adicionar Elemento</h3>
+      <p class="card-sub">Escolha um ícone para inserir no diagrama</p>
+    </div>
+    
+    <div class="croqui-icon-tabs" style="display: flex; gap: 5px; margin-bottom: 10px;">
+      <button class="btn btn-sm btn-primary" data-click="croqui_filtrarIcones('veiculos')">Veículos</button>
+      <button class="btn btn-sm" data-click="croqui_filtrarIcones('sinistros')">Sinistros</button>
+    </div>
+
+    <div id="croqui-icon-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+      <!-- Ícones Veículos -->
+      <div class="croqui-icon-item veiculos" data-click="croqui_inserirIcone('v1')" style="text-align: center; cursor: pointer; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+        <div style="font-size: 24px;">🚗</div>
+        <span style="font-size: 10px;">Veículo V1</span>
+      </div>
+      <div class="croqui-icon-item veiculos" data-click="croqui_inserirIcone('v2')" style="text-align: center; cursor: pointer; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+        <div style="font-size: 24px; filter: hue-rotate(90deg);">🚗</div>
+        <span style="font-size: 10px;">Veículo V2</span>
+      </div>
+      <div class="croqui-icon-item veiculos" data-click="croqui_inserirIcone('moto')" style="text-align: center; cursor: pointer; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+        <div style="font-size: 24px;">🏍️</div>
+        <span style="font-size: 10px;">Moto</span>
+      </div>
+      <div class="croqui-icon-item veiculos" data-click="croqui_inserirIcone('caminhao')" style="text-align: center; cursor: pointer; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+        <div style="font-size: 24px;">🚚</div>
+        <span style="font-size: 10px;">Caminhão</span>
+      </div>
+
+      <!-- Ícones Sinistros (Dinâmico via JS ou Manual fixo dos principais) -->
+      <div class="croqui-icon-item sinistros hidden" data-click="croqui_inserirSvg('3.1-colisao-frontal.svg')" style="text-align: center; cursor: pointer; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+        <img src="img/sinistros/3.1-colisao-frontal.svg" style="width: 30px; height: 30px; filter: invert(1);">
+        <span style="font-size: 10px;">Colisão Frontal</span>
+      </div>
+      <div class="croqui-icon-item sinistros hidden" data-click="croqui_inserirSvg('3.2-colisao-traseira.svg')" style="text-align: center; cursor: pointer; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+        <img src="img/sinistros/3.2-colisao-traseira.svg" style="width: 30px; height: 30px; filter: invert(1);">
+        <span style="font-size: 10px;">Colisão Traseira</span>
+      </div>
+      <div class="croqui-icon-item sinistros hidden" data-click="croqui_inserirSvg('1.1-atropelamento-pedestre.svg')" style="text-align: center; cursor: pointer; padding: 10px; border: 1px solid var(--border); border-radius: 8px;">
+        <img src="img/sinistros/1.1-atropelamento-pedestre.svg" style="width: 30px; height: 30px; filter: invert(1);">
+        <span style="font-size: 10px;">Pedestre</span>
+      </div>
+    </div>
+
+    <div class="v360-modal-foot" style="margin-top: 15px;">
+      <button class="btn btn-full" data-click="croqui_fecharModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal v360 Motocicleta -->
 <div class="v360-overlay" id="v360-overlay" data-click="v360closeModalOnBackdrop(event)">
   <div class="v360-modal">
@@ -1571,8 +1707,8 @@
 <!-- ============================================================
      SCRIPTS UNIFICADOS
 ============================================================ -->
-  <script src="js/core.js"></script>
-  <script src="js/gps_data_sc.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="js/core.js"></script>  <script src="js/gps_data_sc.js"></script>
   <script src="js/gps.js"></script>
   <script src="js/patrulhamento.js"></script>
   <script src="js/assuncao.js"></script>
@@ -1580,6 +1716,7 @@
   <script src="js/pmrv.js"></script>
   <script src="js/danos.js"></script>
   <script src="js/relatorio.js"></script>
+  <script src="js/croqui.js"></script>
   <script src="js/infracoes-data.js"></script>
   <script src="js/infracoes.js"></script>
 
