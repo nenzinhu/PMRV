@@ -94,23 +94,55 @@ function pat_onRodoviaManualChange() {
 }
 
 /**
- * Simula a leitura de placa via OCR
+ * Realiza a leitura de placa via OCR (Tesseract.js)
  */
-function pat_simularOCR(input) {
+async function pat_simularOCR(input) {
     if (!input.files || !input.files[0]) return;
     
     const placaInput = document.getElementById('pat_placa');
-    placaInput.value = "PROCESSANDO...";
+    const originalValue = placaInput.value;
+    placaInput.value = "LENDO PLACA...";
     pat_setModoPlaca('manual');
 
-    setTimeout(() => {
-        const letras = "ABCDE";
-        const numeros = "0123456789";
-        let mockPlaca = letras[Math.floor(Math.random() * 5)] + letras[Math.floor(Math.random() * 5)] + letras[Math.floor(Math.random() * 5)];
-        mockPlaca += numeros[Math.floor(Math.random() * 10)] + letras[Math.floor(Math.random() * 5)] + numeros[Math.floor(Math.random() * 10)] + numeros[Math.floor(Math.random() * 10)];
-        placaInput.value = mockPlaca;
-        alert("Placa detectada via OCR: " + mockPlaca);
-    }, 1500);
+    try {
+        const image = input.files[0];
+        
+        // Inicializa o worker do Tesseract
+        const worker = await Tesseract.createWorker('eng'); // eng funciona bem para placas (letras/números)
+        
+        // Configurações para melhorar detecção de placas (apenas caracteres alfanuméricos)
+        await worker.setParameters({
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+        });
+
+        const { data: { text } } = await worker.recognize(image);
+        await worker.terminate();
+
+        // Limpa o texto: remove espaços, quebras de linha e caracteres estranhos
+        let cleanedText = text.replace(/[^A-Z0-9]/g, '').toUpperCase();
+        
+        // Tenta encontrar um padrão de placa (7 caracteres) dentro do texto reconhecido
+        // Padrão Antigo: AAA9999 | Padrão Mercosul: AAA9A99
+        const regexPlaca = /[A-Z]{3}[0-9][A-Z0-9][0-9]{2}/;
+        const match = cleanedText.match(regexPlaca);
+
+        if (match) {
+            placaInput.value = match[0];
+            alert("✅ Placa identificada: " + match[0]);
+        } else if (cleanedText.length >= 7) {
+            // Se não bateu na regex mas tem 7+ chars, pega os primeiros 7
+            placaInput.value = cleanedText.substring(0, 7);
+            alert("⚠️ Placa detectada (verifique): " + cleanedText.substring(0, 7));
+        } else {
+            placaInput.value = originalValue;
+            alert("❌ Não foi possível ler a placa com clareza. Tente uma foto mais próxima e nítida.");
+        }
+
+    } catch (error) {
+        console.error("Erro no OCR:", error);
+        placaInput.value = originalValue;
+        alert("Erro ao processar imagem. Verifique sua conexão ou tente novamente.");
+    }
 }
 
 /**
@@ -396,5 +428,3 @@ window.pat_gerarRelatorio = pat_gerarRelatorio;
 window.pat_whatsapp = pat_whatsapp;
 window.pat_downloadTXT = pat_downloadTXT;
 window.pat_atualizarDataHora = pat_atualizarDataHora;
-
-console.log("Módulo de Patrulhamento atualizado: Localização Manual disponível.");

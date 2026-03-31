@@ -1,4 +1,4 @@
-﻿/* ---------------------------------------------------------------
+/* ---------------------------------------------------------------
    PMRv
 --------------------------------------------------------------- */
 const PMRV_DINAMICAS = {
@@ -34,17 +34,22 @@ function pmrv_verificarVitimas() {
   pmrv_atualizar();
 }
 
+/**
+ * Lógica dinâmica para cidades baseada na rodovia selecionada
+ */
 function pmrv_verificarRodovia() {
   const rod = document.getElementById('pmrv_rodovia').value;
   const cidade = document.getElementById('pmrv_cidade');
   const sel407 = document.getElementById('pmrv_cidade_407');
   const sel281 = document.getElementById('pmrv_cidade_281');
-  const fixas = ['SC-400','SC-401','SC-402','SC-403','SC-405','SC-406'];
+  
+  // Rodovias típicas de Florianópolis (Posto 19)
+  const floripaRodovias = ['SC-400','SC-401','SC-402','SC-403','SC-404','SC-405','SC-406'];
 
   sel407.classList.add('hidden');
   sel281.classList.add('hidden');
 
-  if (fixas.includes(rod)) {
+  if (floripaRodovias.includes(rod)) {
     cidade.value = 'Florianópolis/SC';
     cidade.readOnly = true;
     cidade.style.opacity = '.6';
@@ -59,8 +64,14 @@ function pmrv_verificarRodovia() {
     cidade.readOnly = true;
     cidade.style.opacity = '.6';
   } else {
+    // Para outras rodovias do estado, permite edição manual da cidade
+    // Opcional: Futuramente carregar cidade via geocoding reverso real
     cidade.readOnly = false;
     cidade.style.opacity = '1';
+    if (!cidade.value || cidade.value === 'Florianópolis/SC') {
+        cidade.value = '';
+        cidade.placeholder = 'Digite a Cidade/SC';
+    }
   }
   pmrv_atualizar();
 }
@@ -77,7 +88,7 @@ function pmrv_selecionarCidade281() {
 
 function pmrv_formatarKM(val) {
   if (!val) return '---';
-  const num = parseFloat(val.replace(',', '.').replace(/[^\d.]/g, ''));
+  const num = parseFloat(String(val).replace(',', '.').replace(/[^\d.]/g, ''));
   return isNaN(num) ? '---' : num.toLocaleString('pt-BR', { minimumFractionDigits: 3 });
 }
 
@@ -108,7 +119,7 @@ function pmrv_gerarTexto(negrito = false) {
   const sade    = document.getElementById('pmrv_sade').value    || '---';
   const vtr     = document.getElementById('pmrv_vtr').value     || '---';
   const cidade  = document.getElementById('pmrv_cidade').value  || '---';
-  const rodovia = document.getElementById('pmrv_rodovia').value;
+  const rodovia = document.getElementById('pmrv_rodovia').value || '---';
   const km      = pmrv_formatarKM(document.getElementById('pmrv_km').value);
   const conhc   = document.getElementById('pmrv_conhecimento').value;
   const ocorr   = document.getElementById('pmrv_ocorrencia').value;
@@ -184,4 +195,3 @@ function pmrv_limpar() {
   pmrv_toggleSentidoManual();
   pmrv_mudarSubtipo();
 }
-

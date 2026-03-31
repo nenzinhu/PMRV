@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function(){
    MÓDULO CORE
 --------------------------------------------------------------- */
 PMRV.core = (function() {
-  const SCREENS = ['home','assumir','envolvidos','pmrv','danos','relatorio','infracoes','help','ended','docs','patrulhamento'];
+  const SCREENS = ['home','assumir','envolvidos','pmrv','danos','relatorio','infracoes','help','ended','docs','patrulhamento','croqui'];
 
   function go(name) {
     SCREENS.forEach(id => {
@@ -66,6 +66,9 @@ PMRV.core = (function() {
     }
     if (name === 'infracoes' && typeof window.infra_init === 'function') {
       window.infra_init();
+    }
+    if (name === 'croqui' && typeof window.croqui_init === 'function') {
+      window.croqui_init();
     }
   }
 

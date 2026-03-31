@@ -1,54 +1,74 @@
 /**
- * Lógica de GPS para identificação de Rodovia e KM (PMRv)
- * Focada em Florianópolis, São José e Biguaçu
+ * Lógica de GPS para identificação de Rodovia e KM (PMRv SC)
+ * Utiliza base de dados gerada a partir de Shapefile oficial
  */
 
-const GPS_RODOVIAS = {
+// Fallback caso a base de dados externa não carregue
+const GPS_RODOVIAS_BASE = {
     "SC-401": [
-        { km: 0, lat: -27.581512, lng: -48.513470 }, // Início Itacorubi
-        { km: 1.5, lat: -27.568200, lng: -48.511800 }, // Subida do Cemitério
-        { km: 3.2, lat: -27.551500, lng: -48.504200 }, // João Paulo
-        { km: 5.8, lat: -27.528500, lng: -48.498500 }, // Monte Verde
-        { km: 7.5, lat: -27.514000, lng: -48.495000 }, // Saco Grande (SC401 Square)
-        { km: 10.2, lat: -27.491500, lng: -48.489500 }, // Cacupé / Santo Antônio
-        { km: 13.5, lat: -27.466000, lng: -48.485500 }, // Ratones / Vargem Pequena
-        { km: 16.2, lat: -27.447500, lng: -48.474500 }, // Vargem Grande
-        { km: 19.3, lat: -27.434800, lng: -48.463500 }  // Canasvieiras (Trevo)
-    ],
-    "SC-405": [
-        { km: 0, lat: -27.632100, lng: -48.514500 }, // Trevo da Seta
-        { km: 1.2, lat: -27.643000, lng: -48.508000 }, // Ressacada
-        { km: 2.8, lat: -27.656500, lng: -48.497500 }, // Rio Tavares (Trevo Erasmo)
-        { km: 4.5, lat: -27.671000, lng: -48.489500 }  // Sentido Campeche
-    ],
-    "SC-406": [
-        { km: 0, lat: -27.595000, lng: -48.438000 }, // Barra da Lagoa
-        { km: 5.2, lat: -27.561000, lng: -48.423000 }, // Rio Vermelho (Início)
-        { km: 10.5, lat: -27.521000, lng: -48.412000 }, // Rio Vermelho (Meio)
-        { km: 15.8, lat: -27.485500, lng: -48.428500 }, // Ingleses (Muquém)
-        { km: 21.0, lat: -27.448000, lng: -48.455500 }  // Santinho / Ingleses
-    ],
-    "SC-407": [
-        { km: 0, lat: -27.494800, lng: -48.658200 }, // Biguaçu (Centro/BR-101)
-        { km: 5.5, lat: -27.502000, lng: -48.711000 }, // Biguaçu (Interior)
-        { km: 12.0, lat: -27.515500, lng: -48.775000 }  // Antônio Carlos
-    ],
-    "SC-281": [
-        { km: 0, lat: -27.614500, lng: -48.636500 }, // São José (Continente Shopping/BR-101)
-        { km: 4.2, lat: -27.605500, lng: -48.674500 }, // Picadas do Sul
-        { km: 8.5, lat: -27.595500, lng: -48.718500 }, // Sertão do Maruim
-        { km: 15.0, lat: -27.581500, lng: -48.783500 }, // São Pedro de Alcântara (Início)
-        { km: 20.0, lat: -27.565500, lng: -48.835000 }  // São Pedro de Alcântara (Centro)
+        { km: 0, lat: -27.581512, lng: -48.513470 },
+        { km: 19.3, lat: -27.434800, lng: -48.463500 }
     ]
 };
 
+/**
+ * Preenche os selects de rodovias do sistema com os dados carregados de SC.
+ */
+function gps_preencherSelects() {
+    const banco = window.GPS_RODOVIAS_SC || GPS_RODOVIAS_BASE;
+    if (!banco) return;
+
+    const selectIds = ['pmrv_rodovia', 'pat_manual_rodovia'];
+    const rodovias = Object.keys(banco).sort((a, b) => {
+        // Ordenação inteligente: SC-XXX primeiro, depois Acessos
+        if (a.startsWith('SC-') && !b.startsWith('SC-')) return -1;
+        if (!a.startsWith('SC-') && b.startsWith('SC-')) return 1;
+        return a.localeCompare(b);
+    });
+
+    selectIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        const valorAtual = el.value;
+        el.innerHTML = '';
+
+        // Adicionar opção vazia/padrão se for o caso
+        if (id === 'pmrv_rodovia') {
+            const optNone = document.createElement('option');
+            optNone.value = "";
+            optNone.textContent = "-- Selecione a Rodovia --";
+            el.appendChild(optNone);
+        }
+
+        rodovias.forEach(rod => {
+            const opt = document.createElement('option');
+            opt.value = rod;
+            opt.textContent = rod;
+            el.appendChild(opt);
+        });
+
+        if (id === 'pat_manual_rodovia') {
+            const optOutra = document.createElement('option');
+            optOutra.value = 'OUTRA';
+            optOutra.textContent = '✏️ Outra...';
+            el.appendChild(optOutra);
+        }
+
+        // Tentar restaurar valor anterior se ainda existir
+        if (valorAtual) el.value = valorAtual;
+    });
+}
+
+/**
+ * Obtém localização atual e tenta identificar Rodovia/KM
+ */
 function gps_obterLocalizacao() {
     if (!navigator.geolocation) {
         alert("GPS não suportado pelo seu dispositivo.");
         return;
     }
 
-    // Tentar identificar qual botão disparou a ação para dar feedback
     const btnHome = document.querySelector('.btn-gps-minimal[data-click="gps_obterLocalizacao()"]');
     const btnForm = document.getElementById('btn-gps-localizar');
     const activeBtn = btnForm || btnHome;
@@ -70,8 +90,6 @@ function gps_obterLocalizacao() {
             if (resultado) {
                 const rodoviaEl = document.getElementById('pmrv_rodovia');
                 const kmEl = document.getElementById('pmrv_km');
-                
-                // Formatar KM com 3 casas (ex: 12,200)
                 const kmStr = resultado.km.toFixed(3).replace('.', ',');
 
                 if (rodoviaEl) {
@@ -95,11 +113,11 @@ function gps_obterLocalizacao() {
         },
         (err) => {
             let msg = "Erro ao obter GPS";
-            if (err.code === 1) msg = "Permissão de GPS negada pelo usuário.";
-            else if (err.code === 2) msg = "Posição indisponível (verifique se o GPS está ligado).";
-            else if (err.code === 3) msg = "Tempo esgotado ao tentar obter localização.";
+            if (err.code === 1) msg = "Permissão de GPS negada.";
+            else if (err.code === 2) msg = "Posição indisponível.";
+            else if (err.code === 3) msg = "Tempo esgotado.";
             
-            alert(msg + " (" + err.message + ")");
+            alert(msg);
             if (activeBtn) {
                 activeBtn.innerHTML = originalText;
                 activeBtn.disabled = false;
@@ -110,15 +128,18 @@ function gps_obterLocalizacao() {
 }
 
 /**
- * Identifica a rodovia e interpola o KM baseado nas coordenadas
+ * Identifica a rodovia e interpola o KM baseado nas coordenadas.
+ * Otimizado para grandes bases de dados.
  */
 function gps_identificarRodoviaKM(lat, lng) {
     let melhorRodovia = null;
     let melhorKm = 0;
-    let menorDistancia = Infinity;
+    let menorDistanciaSq = Infinity; // Usar distância ao quadrado para performance
 
-    // Tentar primeiro nos dados de SC (mapeamento completo)
-    const bancoRodovias = window.GPS_RODOVIAS_SC || GPS_RODOVIAS;
+    const bancoRodovias = window.GPS_RODOVIAS_SC || GPS_RODOVIAS_BASE;
+    
+    // Limite aproximado de 1km em graus (aproximadamente 0.01 graus)
+    const thresholdDeg = 0.015; 
 
     for (const rodovia in bancoRodovias) {
         const pontos = bancoRodovias[rodovia];
@@ -127,37 +148,51 @@ function gps_identificarRodoviaKM(lat, lng) {
             const p1 = pontos[i];
             const p2 = pontos[i+1];
 
-            // Ponto projetado na reta entre p1 e p2
-            const projetado = gps_projetarPonto(lat, lng, p1.lat, p1.lng, p2.lat, p2.lng);
-            const dist = gps_distancia(lat, lng, projetado.lat, projetado.lng);
+            // Filtro rápido por Bounding Box do segmento + margem
+            const minLat = Math.min(p1.lat, p2.lat) - thresholdDeg;
+            const maxLat = Math.max(p1.lat, p2.lat) + thresholdDeg;
+            const minLng = Math.min(p1.lng, p2.lng) - thresholdDeg;
+            const maxLng = Math.max(p1.lng, p2.lng) + thresholdDeg;
 
-            if (dist < menorDistancia) {
-                menorDistancia = dist;
+            if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) continue;
+
+            // Projeção do ponto no segmento
+            const projetado = gps_projetarPonto(lat, lng, p1.lat, p1.lng, p2.lat, p2.lng);
+            
+            // Distância Euclidiana ao quadrado (mais rápido que Haversine para comparação)
+            const dLat = lat - projetado.lat;
+            const dLng = lng - projetado.lng;
+            const distSq = dLat * dLat + dLng * dLng;
+
+            if (distSq < menorDistanciaSq) {
+                menorDistanciaSq = distSq;
                 melhorRodovia = rodovia;
                 
-                // Cálculo do KM por interpolação linear entre os dois pontos de referência
-                const d12 = gps_distancia(p1.lat, p1.lng, p2.lat, p2.lng);
-                const d1p = gps_distancia(p1.lat, p1.lng, projetado.lat, projetado.lng);
+                // Interpolação do KM
+                const d12Sq = (p2.lat-p1.lat)*(p2.lat-p1.lat) + (p2.lng-p1.lng)*(p2.lng-p1.lng);
+                const d1pSq = (projetado.lat-p1.lat)*(projetado.lat-p1.lat) + (projetado.lng-p1.lng)*(projetado.lng-p1.lng);
                 
-                // Evitar divisão por zero se p1 e p2 forem iguais
-                const proporcao = d12 > 0 ? (d1p / d12) : 0;
+                const proporcao = d12Sq > 0 ? Math.sqrt(d1pSq / d12Sq) : 0;
                 melhorKm = p1.km + (p2.km - p1.km) * proporcao;
             }
         }
     }
 
-    // Limite de 1.0 km para considerar que o usuário está na rodovia
-    if (menorDistancia < 1.0) {
-        return { rodovia: melhorRodovia, km: melhorKm };
+    // Converter menorDistanciaSq para KM real (Haversine) apenas no final para o veredito
+    if (melhorRodovia) {
+        const projetadoFinal = gps_projetarPontoParaKm(lat, lng, melhorRodovia, melhorKm);
+        const distReal = gps_distancia(lat, lng, projetadoFinal.lat, projetadoFinal.lng);
+        
+        if (distReal < 1.0) { // Limite de 1km
+            return { rodovia: melhorRodovia, km: melhorKm };
+        }
     }
+    
     return null;
 }
 
-/**
- * Distância entre dois pontos (Haversine) em KM
- */
 function gps_distancia(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Raio da Terra em KM
+    const R = 6371; 
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
@@ -167,9 +202,6 @@ function gps_distancia(lat1, lon1, lat2, lon2) {
     return R * c;
 }
 
-/**
- * Projeta o ponto P no segmento de reta AB
- */
 function gps_projetarPonto(px, py, ax, ay, bx, by) {
     const r2 = (bx-ax)*(bx-ax) + (by-ay)*(by-ay);
     if (r2 === 0) return { lat: ax, lng: ay };
@@ -181,32 +213,38 @@ function gps_projetarPonto(px, py, ax, ay, bx, by) {
     };
 }
 
-/**
- * Fun��o de TESTE: Simula uma localiza��o em uma das rodovias para fins de demonstra��o.
- */
+// Auxiliar para pegar o ponto exato da rodovia/km identificado (aproximado)
+function gps_projetarPontoParaKm(lat, lng, rodovia, km) {
+    const pontos = (window.GPS_RODOVIAS_SC || GPS_RODOVIAS_BASE)[rodovia];
+    if (!pontos) return { lat, lng };
+    
+    // Apenas busca o ponto de referência mais próximo ao KM identificado
+    let melhorPonto = pontos[0];
+    let menorDiff = Math.abs(pontos[0].km - km);
+    
+    for (const p of pontos) {
+        const diff = Math.abs(p.km - km);
+        if (diff < menorDiff) {
+            menorDiff = diff;
+            melhorPonto = p;
+        }
+    }
+    return melhorPonto;
+}
+
 function gps_simularLocalizacao() {
-    // Lista de pontos de teste (Pontos reais nas rodovias mapeadas)
     const pontosTeste = [
-        { lat: -27.5000, lng: -48.4900, msg: 'Simulando SC-401 KM 10.2 (Saco Grande)' },
-        { lat: -27.6550, lng: -48.4980, msg: 'Simulando SC-405 KM 2.8 (Rio Tavares)' },
-        { lat: -27.5955, lng: -48.7185, msg: 'Simulando SC-281 KM 8.5 (Sert�o do Maruim)' },
-        { lat: -27.4948, lng: -48.6582, msg: 'Simulando SC-407 KM 0.0 (Bigua�u Centro)' }
+        { lat: -27.5000, lng: -48.4900, msg: 'Simulando SC-401 próximo ao Square' },
+        { lat: -27.6550, lng: -48.4980, msg: 'Simulando SC-405 Rio Tavares' },
+        { lat: -28.4800, lng: -49.0000, msg: 'Simulando Rodovia no Sul de SC' }
     ];
 
-    // Escolhe um ponto aleat�rio
     const ponto = pontosTeste[Math.floor(Math.random() * pontosTeste.length)];
-    
-    console.log('--- MODO TESTE ATIVADO ---');
-    console.log(ponto.msg);
-
     const resultado = gps_identificarRodoviaKM(ponto.lat, ponto.lng);
     
     if (resultado) {
-        // Preencher campos no formul�rio PMRv
         const rodoviaEl = document.getElementById('pmrv_rodovia');
         const kmEl = document.getElementById('pmrv_km');
-        const localPatEl = document.getElementById('pat_local');
-        
         if (rodoviaEl) {
             rodoviaEl.value = resultado.rodovia;
             if (typeof pmrv_verificarRodovia === 'function') pmrv_verificarRodovia();
@@ -215,45 +253,8 @@ function gps_simularLocalizacao() {
             kmEl.value = resultado.km.toFixed(3).replace('.', ',');
             if (typeof pmrv_atualizar === 'function') pmrv_atualizar();
         }
-        if (localPatEl) {
-            localPatEl.value = resultado.rodovia + ', KM ' + resultado.km.toFixed(1);
-        }
-
-        alert('?? MODO TESTE / SIMULAO\n\n' + ponto.msg + '\n\nRodovia: ' + resultado.rodovia + '\nKM: ' + resultado.km.toFixed(3));
-        }
-        }
-
-        /**
-        * Preenche os selects de rodovias do sistema com os dados carregados de SC.
-        */
-        function gps_preencherSelects() {
-        const banco = window.GPS_RODOVIAS_SC;
-        if (!banco) return;
-
-        const selectIds = ['pmrv_rodovia', 'pat_manual_rodovia'];
-        const rodovias = Object.keys(banco).sort();
-
-        selectIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-
-        // Limpar opções atuais (mantendo apenas as essenciais se necessário)
-        el.innerHTML = '';
-
-        rodovias.forEach(rod => {
-            const opt = document.createElement('option');
-            opt.value = rod;
-            opt.textContent = rod;
-            el.appendChild(opt);
-        });
-
-        // Adicionar opção "OUTRA" se for o select de patrulhamento
-        if (id === 'pat_manual_rodovia') {
-            const optOutra = document.createElement('option');
-            optOutra.value = 'OUTRA';
-            optOutra.textContent = '✏️ Outra...';
-            el.appendChild(optOutra);
-        }
-        });
-        }
-
+        alert('🧪 MODO TESTE\n\n' + ponto.msg + '\n\nRodovia: ' + resultado.rodovia + '\nKM: ' + resultado.km.toFixed(3));
+    } else {
+        alert('🧪 MODO TESTE\n\nNenhuma rodovia identificada para os pontos de teste.');
+    }
+}
