@@ -342,6 +342,12 @@
     .menu-icon-img-danos { transform: scale(1.03); }
     .menu-icon-img-rel { transform: scale(1.08); }
     .menu-icon-img-help { transform: scale(1.08); }
+    .menu-icon-img-pat { transform: scale(1.04); }
+    .menu-icon-img-peso { transform: scale(1.02); }
+    .menu-icon-img-taco { transform: scale(1.02); }
+    .menu-icon-img-cal { transform: scale(1.04); }
+    .menu-icon-img-croqui { transform: scale(1.04); }
+    .menu-icon-img-ctb { transform: scale(1.03); }
 
     .menu-title {
       font-family: var(--font-display);

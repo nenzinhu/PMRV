@@ -24,7 +24,7 @@ footer.footer-signature .author {
 
 /* Grade responsiva para formulários.  Ajusta automaticamente o
    número de colunas conforme a largura da tela. */
-.form-grid {
+.legacy-layout .form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
@@ -32,11 +32,11 @@ footer.footer-signature .author {
 
 /* Torna botões e layouts mais amigáveis em telas pequenas. */
 @media (max-width: 768px) {
-  .btn {
+  .legacy-layout .btn {
     width: 100%;
     margin-bottom: 8px;
   }
-  .steps {
+  .legacy-layout .steps {
     flex-direction: column;
   }
 }
@@ -278,7 +278,7 @@ footer.footer-signature .author {
   align-items: center;
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
   transform: translate(-9999px, -9999px);
-  max-width: 200px;
+  max-width: 240px;
 }
 
 #dan-hover-tooltip.open {
@@ -286,24 +286,69 @@ footer.footer-signature .author {
 }
 
 .dan-tooltip-zoom {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
+  width: 190px;
+  height: 190px;
+  border-radius: 18px;
   overflow: hidden;
   border: 2px solid #f58220;
   background: #000;
   position: relative;
   margin-bottom: 8px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
 }
 
 .dan-tooltip-zoom-img {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: none;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
   image-rendering: high-quality;
+  will-change: transform;
+}
+
+.dan-tooltip-crosshair {
+  position: absolute;
+  inset: 0;
+}
+
+.dan-tooltip-crosshair::before,
+.dan-tooltip-crosshair::after {
+  content: '';
+  position: absolute;
+  background: rgba(245, 130, 32, 0.95);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.dan-tooltip-crosshair::before {
+  width: 2px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+}
+
+.dan-tooltip-crosshair::after {
+  height: 2px;
+  width: 100%;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+}
+
+.dan-tooltip-point {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #f58220;
+  border: 2px solid #fff;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45);
 }
 
 .dan-tooltip-label {
