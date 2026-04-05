@@ -1,359 +1,424 @@
 /* ---------------------------------------------------------------
-   INICIANDO O SERVIÇO - Lógica Otimizada (Namespace PMRV)
+   INICIANDO O SERVICO - COMPATIVEL COM O HTML ATUAL
 --------------------------------------------------------------- */
 window.PMRV = window.PMRV || {};
 
 PMRV.assuncao = (function() {
   const POLICIAIS_EFETIVO = [
     'Sub Ten JORGE LUIZ', 'Sub Ten OSORIO',
-    '2º Sgt BARDT', '2º Sgt CAVALLAZZI', '3º Sgt DOUGLAS', '3º Sgt FIGUEIREDO', '3º Sgt FRANCISCO', '3º Sgt FRANCINE', '3º Sgt LEONARDO', '3º Sgt MARTINS', '3º Sgt WALTER',
-    'Cb ADEMIR', 'Cb ANDRADE', 'Cb CABRAL', 'Cb DIEGO', 'Cb FABIANA', 'Cb JEFERSON', 'Cb JULIANA', 'Cb MATHEUS', 'Cb RODRIGUES', 'Cb SANTOS', 'Cb SCARABELOT', 'Cb SILVA', 'Cb THIAGO'
+    '2o Sgt BARDT', '2o Sgt CAVALLAZZI', '3o Sgt DOUGLAS', '3o Sgt FIGUEIREDO',
+    '3o Sgt FRANCISCO', '3o Sgt FRANCINE', '3o Sgt LEONARDO', '3o Sgt MARTINS',
+    '3o Sgt WALTER', 'Cb ADEMIR', 'Cb ANDRADE', 'Cb CABRAL', 'Cb DIEGO',
+    'Cb FABIANA', 'Cb JEFERSON', 'Cb JULIANA', 'Cb MATHEUS', 'Cb RODRIGUES',
+    'Cb SANTOS', 'Cb SCARABELOT', 'Cb SILVA', 'Cb THIAGO'
   ];
 
-  // Estado Privado
-  let isMesa = false;
-  let currentVtr = '';
-  let currentEscala = '';
-  let selectedPols = [];
-  let lotes = []; // {id, numero, tipo, policiais:[], horario, isMesa}
+  const state = {
+    mesa: false,
+    vtr: '',
+    tipo: '',
+    policiaisSelecionados: [],
+    lotes: [],
+    ultimoGrupo: ''
+  };
+
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    }[char]));
+  }
 
   function init() {
-    renderPols();
+    const vtrInput = byId('ass_build_vtr_input');
+    const tipoInput = byId('ass_build_tipo_input');
+
+    if (vtrInput) {
+      vtrInput.addEventListener('input', () => {
+        vtrInput.value = vtrInput.value.replace(/\D/g, '').slice(0, 4);
+        atualizarLabelVtr();
+        atualizarTipoUI();
+      });
+    }
+
+    if (tipoInput) {
+      tipoInput.addEventListener('input', atualizarLabel);
+    }
+
+    renderPoliciaisSelecionados();
     renderLotes();
-    updateUI();
-    currentEscala = '';
-    const escalaWrap = document.getElementById('ass_escala_wrap');
-    if (escalaWrap) escalaWrap.classList.add('hidden');
+    atualizarModoMesa();
+    atualizarLabelVtr();
+    atualizarTipoUI();
   }
 
-  function setMode(mesaMode) {
-    isMesa = mesaMode;
-    if (isMesa) {
-      currentVtr = 'MESA';
-      currentEscala = '';
-      const escalaWrap = document.getElementById('ass_escala_wrap');
-      if (escalaWrap) escalaWrap.classList.add('hidden');
+  function atualizarModoMesa() {
+    const mesaBtn = byId('ass_mesa_btn');
+    const vtrSection = byId('ass_build_vtr_section');
+    const tipoSection = byId('ass_build_tipo_section');
+    const polLabel = byId('ass_build_pol_label');
+    const horLabel = byId('ass_build_hor_label');
+    const confirmarBtn = byId('ass_build_confirmar_btn');
+
+    if (mesaBtn) mesaBtn.classList.toggle('btn-primary', state.mesa);
+    if (vtrSection) vtrSection.style.display = state.mesa ? 'none' : '';
+    if (tipoSection && state.mesa) tipoSection.style.display = 'none';
+    if (polLabel) polLabel.textContent = state.mesa ? 'Policiais da Recepcao' : 'Policiais desta Viatura';
+    if (horLabel) horLabel.textContent = state.mesa ? 'Horario da Recepcao' : 'Horario desta Viatura';
+    if (confirmarBtn) confirmarBtn.textContent = state.mesa ? '+ Confirmar Recepcao' : '+ Confirmar Viatura';
+  }
+
+  function atualizarLabelVtr() {
+    const label = byId('ass_build_vtr_label');
+    if (!label) return;
+
+    if (state.mesa) {
+      label.style.display = 'none';
+      return;
+    }
+
+    if (state.vtr) {
+      label.style.display = 'block';
+      label.textContent = 'Selecionado: PM-' + state.vtr;
     } else {
-      currentVtr = '';
+      label.style.display = 'none';
+      label.textContent = '';
     }
-    
-    const btnMesa = document.getElementById('btn-mode-mesa');
-    const btnVtr = document.getElementById('btn-mode-vtr');
-    if (btnMesa) btnMesa.className = isMesa ? 'btn btn-primary flex-1' : 'btn flex-1';
-    if (btnVtr) btnVtr.className = !isMesa ? 'btn btn-primary flex-1' : 'btn flex-1';
-    
-    const vtrSelection = document.getElementById('ass_vtr_selection');
-    if (vtrSelection) vtrSelection.classList.toggle('hidden', isMesa);
-    
-    const confirmBtn = document.getElementById('ass_confirm_btn');
-    if (confirmBtn) confirmBtn.textContent = isMesa ? '➕ Adicionar Mesa' : '➕ Adicionar Viatura';
-    
-    updateUI();
   }
 
-  function selectVtr(vtr) {
-    currentVtr = vtr;
-    const vtrManualWrap = document.getElementById('ass_vtr_manual_wrap');
-    if (vtrManualWrap) vtrManualWrap.classList.add('hidden');
-    
-    const escalaWrap = document.getElementById('ass_escala_wrap');
-    if (escalaWrap) escalaWrap.classList.remove('hidden');
-    
-    updateUI();
+  function atualizarTipoUI() {
+    const section = byId('ass_build_tipo_section');
+    if (!section) return;
+
+    section.style.display = !state.mesa && state.vtr ? 'block' : 'none';
+
+    document.querySelectorAll('.ass-tipo-btn').forEach(btn => {
+      const isActive = btn.getAttribute('data-click')?.includes("'" + state.tipo + "'");
+      btn.classList.toggle('btn-primary', Boolean(isActive));
+    });
   }
 
-  function toggleVtrManual() {
-    const wrap = document.getElementById('ass_vtr_manual_wrap');
-    if (!wrap) return;
-    wrap.classList.toggle('hidden');
-    if (!wrap.classList.contains('hidden')) {
-      currentVtr = '__manual__';
-      const input = document.getElementById('ass_vtr_input_manual');
-      if (input) input.focus();
-      const escalaWrap = document.getElementById('ass_escala_wrap');
-      if (escalaWrap) escalaWrap.classList.remove('hidden');
-    }
-    updateUI();
-  }
+  function renderGrupoEfetivo() {
+    const nomesGrid = byId('ass_build_nomes_grid');
+    if (!nomesGrid) return;
 
-  function selectEscala(escala) {
-    currentEscala = escala;
-    const manualWrap = document.getElementById('ass_escala_manual_wrap');
-    if (manualWrap) manualWrap.classList.add('hidden');
-    
-    if (escala === 'Ordinária') {
-      const select = document.getElementById('ass_horario_select');
-      if (select) {
-        select.value = '07h às 07h';
-        onHorarioChange();
+    nomesGrid.style.display = 'flex';
+    nomesGrid.innerHTML = '';
+
+    POLICIAIS_EFETIVO.forEach(policial => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'vtr-btn';
+      if (state.policiaisSelecionados.includes(policial)) {
+        button.classList.add('btn-primary');
       }
-    }
-    
-    updateUI();
-  }
-
-  function toggleEscalaManual() {
-    const wrap = document.getElementById('ass_escala_manual_wrap');
-    if (!wrap) return;
-    wrap.classList.toggle('hidden');
-    if (!wrap.classList.contains('hidden')) {
-      currentEscala = '__manual__';
-      const input = document.getElementById('ass_escala_input_manual');
-      if (input) input.focus();
-    }
-    updateUI();
-  }
-
-  function renderPols() {
-    const grid = document.getElementById('ass_pol_grid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    POLICIAIS_EFETIVO.forEach(p => {
-      const btn = document.createElement('button');
-      const active = selectedPols.includes(p);
-      btn.className = `pol-chip ${active ? 'active' : ''}`;
-      btn.textContent = p;
-      btn.onclick = () => togglePol(p);
-      grid.appendChild(btn);
+      button.textContent = policial;
+      button.addEventListener('click', () => alternarPolicial(policial));
+      nomesGrid.appendChild(button);
     });
   }
 
-  function togglePol(p) {
-    const idx = selectedPols.indexOf(p);
-    if (idx > -1) selectedPols.splice(idx, 1);
-    else selectedPols.push(p);
-    renderPols();
+  function alternarPolicial(nome) {
+    const index = state.policiaisSelecionados.indexOf(nome);
+    if (index >= 0) state.policiaisSelecionados.splice(index, 1);
+    else state.policiaisSelecionados.push(nome);
+
+    if (state.ultimoGrupo === 'efetivo') renderGrupoEfetivo();
+    renderPoliciaisSelecionados();
   }
 
-  function toggleManualPol() {
-    const wrap = document.getElementById('ass_manual_pol_wrap');
-    if (wrap) wrap.classList.toggle('hidden');
-  }
+  function renderPoliciaisSelecionados() {
+    const wrap = byId('ass_build_pol_chips_wrap');
+    const chips = byId('ass_build_pol_chips');
+    if (!wrap || !chips) return;
 
-  function addPolManual() {
-    const gradEl = document.getElementById('ass_grad_manual');
-    const nomeEl = document.getElementById('ass_nome_manual');
-    if (!gradEl || !nomeEl) return;
-    
-    const grad = gradEl.value;
-    const nome = nomeEl.value.trim().toUpperCase();
-    if (!nome) return;
-    const completo = grad + ' ' + nome;
-    if (!selectedPols.includes(completo)) {
-      selectedPols.push(completo);
-      renderPols();
-    }
-    nomeEl.value = '';
-  }
-
-  function onHorarioChange() {
-    const select = document.getElementById('ass_horario_select');
-    const wrap = document.getElementById('ass_horario_manual_wrap');
-    if (!select || !wrap) return;
-    
-    wrap.classList.toggle('hidden', select.value !== '__manual__');
-    if (select.value === '__manual__') {
-      const input = document.getElementById('ass_horario_input_manual');
-      if (input) input.focus();
-    }
-  }
-
-  function addLote() {
-    if (selectedPols.length === 0) {
-      alert('Selecione ao menos um policial.');
-      return;
-    }
-    
-    let vtrFinal = currentVtr;
-    if (vtrFinal === '__manual__') {
-      const input = document.getElementById('ass_vtr_input_manual');
-      vtrFinal = input ? input.value.trim() : '';
-      if (!vtrFinal) { alert('Informe o número da viatura.'); return; }
-    }
-    
-    if (!isMesa && !vtrFinal) {
-      alert('Selecione uma viatura.');
+    if (!state.policiaisSelecionados.length) {
+      wrap.style.display = 'none';
+      chips.innerHTML = '';
       return;
     }
 
-    let escalaFinal = currentEscala;
-    if (escalaFinal === '__manual__') {
-      const input = document.getElementById('ass_escala_input_manual');
-      escalaFinal = input ? input.value.trim() : '';
-      if (!escalaFinal) { alert('Informe o nome do evento.'); return; }
-    }
-    
-    if (!isMesa && !escalaFinal) {
-      alert('Selecione o tipo de escala.');
-      return;
-    }
-
-    const select = document.getElementById('ass_horario_select');
-    let horarioFinal = select ? select.value : '';
-    if (horarioFinal === '__manual__') {
-      const input = document.getElementById('ass_horario_input_manual');
-      horarioFinal = input ? input.value.trim() : '';
-      if (!horarioFinal) { alert('Informe o horário manual.'); return; }
-    }
-    
-    const newLote = {
-      id: Date.now().toString(),
-      numero: isMesa ? 'MESA' : vtrFinal,
-      tipo: isMesa ? '' : escalaFinal,
-      policiais: [...selectedPols],
-      horario: horarioFinal,
-      isMesa: isMesa
-    };
-
-    lotes.push(newLote);
-    resetCurrent();
-    renderLotes();
-  }
-
-  function resetCurrent() {
-    selectedPols = [];
-    currentVtr = isMesa ? 'MESA' : '';
-    currentEscala = '';
-    
-    const idsToClear = ['ass_vtr_input_manual', 'ass_escala_input_manual', 'ass_horario_input_manual', 'ass_nome_manual'];
-    idsToClear.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.value = '';
-    });
-    
-    const select = document.getElementById('ass_horario_select');
-    if (select) select.value = '07h às 19h';
-    
-    const wrapsToHide = ['ass_vtr_manual_wrap', 'ass_escala_manual_wrap', 'ass_horario_manual_wrap', 'ass_manual_pol_wrap'];
-    wrapsToHide.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.classList.add('hidden');
-    });
-    
-    const escalaWrap = document.getElementById('ass_escala_wrap');
-    if (!isMesa && escalaWrap) {
-      escalaWrap.classList.add('hidden');
-    }
-    
-    renderPols();
-    updateUI();
-    
-    const target = document.querySelector('#screen-assumir .card');
-    if (target) target.scrollIntoView({ behavior: 'smooth' });
-  }
-
-  function clearAll() {
-    if (confirm('Deseja limpar todo o relatório montado?')) {
-      lotes = [];
-      renderLotes();
-      resetCurrent();
-    }
-  }
-
-  function removeLote(id) {
-    lotes = lotes.filter(l => l.id !== id);
-    renderLotes();
+    wrap.style.display = 'block';
+    chips.innerHTML = state.policiaisSelecionados.map(nome =>
+      '<span class="brand-pill">' + escapeHtml(nome) + '</span>'
+    ).join('');
   }
 
   function renderLotes() {
-    const card = document.getElementById('ass_lotes_card');
-    const container = document.getElementById('ass_lotes_container');
-    if (!card || !container) return;
-    
-    if (lotes.length === 0) {
-      card.classList.add('hidden');
+    const wrap = byId('ass_lotes_wrap');
+    const lista = byId('ass_lotes_lista');
+    if (!wrap || !lista) return;
+
+    if (!state.lotes.length) {
+      wrap.style.display = 'none';
+      lista.innerHTML = '';
       return;
     }
-    
-    card.classList.remove('hidden');
-    container.innerHTML = '';
-    
-    lotes.forEach(l => {
-      const div = document.createElement('div');
-      div.className = 'lote-item';
-      const infoVtr = l.isMesa ? '🪑 MESA P19' : `🚔 PM-${l.numero} — ${l.tipo}`;
-      div.innerHTML = `
-        <div style="flex:1">
-          <div class="lote-title">
-            ${infoVtr} 
-            <span class="lote-horario">[${l.horario}]</span>
-          </div>
-          <div class="lote-pols">${l.policiais.join(' / ')}</div>
-        </div>
-        <button class="btn-remove" onclick="PMRV.assuncao.removeLote('${l.id}')">✕</button>
-      `;
-      container.appendChild(div);
-    });
+
+    wrap.style.display = 'block';
+    lista.innerHTML = state.lotes.map((lote, index) => {
+      const titulo = lote.mesa
+        ? 'Recepcao do P19'
+        : ('PM-' + escapeHtml(lote.vtr) + ' - ' + escapeHtml(lote.tipo));
+
+      return (
+        '<div class="lote-item">' +
+          '<div style="flex:1;">' +
+            '<div class="lote-title">' + titulo +
+              '<span class="lote-horario">[' + escapeHtml(lote.horario) + ']</span>' +
+            '</div>' +
+            '<div class="lote-pols">' + escapeHtml(lote.policiais.join(' / ')) + '</div>' +
+          '</div>' +
+          '<button type="button" class="btn-remove" data-click="ass_removerLote(' + index + ')">x</button>' +
+        '</div>'
+      );
+    }).join('');
   }
 
-  function updateUI() {
-    document.querySelectorAll('#ass_vtr_grid .vtr-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent === currentVtr);
-    });
-    document.querySelectorAll('#ass_escala_grid .vtr-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent === currentEscala);
-    });
+  function limparBuilder() {
+    state.vtr = '';
+    state.tipo = '';
+    state.policiaisSelecionados = [];
+    state.ultimoGrupo = '';
+
+    const vtrInput = byId('ass_build_vtr_input');
+    const tipoInput = byId('ass_build_tipo_input');
+    const tipoManualWrap = byId('ass_build_tipo_manual_wrap');
+    const nomesGrid = byId('ass_build_nomes_grid');
+    const horario = byId('ass_build_horario');
+
+    if (vtrInput) vtrInput.value = '';
+    if (tipoInput) tipoInput.value = '';
+    if (tipoManualWrap) tipoManualWrap.classList.add('hidden');
+    if (nomesGrid) {
+      nomesGrid.innerHTML = '';
+      nomesGrid.style.display = 'none';
+    }
+    if (horario) horario.value = '06h às 18h';
+
+    document.querySelectorAll('#ass_build_vtr_grid .vtr-btn').forEach(btn => btn.classList.remove('btn-primary'));
+    document.querySelectorAll('.ass-tipo-btn').forEach(btn => btn.classList.remove('btn-primary'));
+
+    atualizarLabelVtr();
+    atualizarTipoUI();
+    renderPoliciaisSelecionados();
   }
 
-  function generateText() {
-    const h = new Date().getHours();
-    const saudacao = h >= 5 && h < 12 ? '☀️ Bom dia' : h >= 12 && h < 18 ? '🌤️ Boa tarde' : '🌙 Boa noite';
-    let text = `${saudacao}! Guarnição iniciando serviço\n`;
-    
-    lotes.forEach(l => {
-      if (l.isMesa) {
-        text += `🔹 Na Recepção do P19 (${l.horario})\n🔹 *Policiais:* ${l.policiais.join(' / ')}\n`;
-      } else {
-        text += `🔹 *Viatura* PM-${l.numero} — ${l.tipo}\n🔹 *Policiais:* ${l.policiais.join(' / ')}\n🔹 *Horário:* ${l.horario}\n`;
-      }
+  function obterTipoAtual() {
+    if (state.tipo === '__manual__') {
+      return byId('ass_build_tipo_input')?.value.trim() || '';
+    }
+    return state.tipo;
+  }
+
+  function obterVtrAtual() {
+    if (state.mesa) return 'MESA';
+    const inputValue = byId('ass_build_vtr_input')?.value.replace(/\D/g, '').slice(0, 4) || '';
+    if (state.vtr === '__manual__') return inputValue;
+    return state.vtr;
+  }
+
+  function toggleMesa() {
+    state.mesa = !state.mesa;
+    limparBuilder();
+    atualizarModoMesa();
+  }
+
+  function selecionarVtr(button, vtr) {
+    state.mesa = false;
+    state.vtr = vtr;
+
+    const manualWrap = byId('ass_build_vtr_manual_wrap');
+    if (manualWrap) manualWrap.classList.add('hidden');
+
+    document.querySelectorAll('#ass_build_vtr_grid .vtr-btn').forEach(btn => btn.classList.remove('btn-primary'));
+    button?.classList.add('btn-primary');
+
+    atualizarModoMesa();
+    atualizarLabelVtr();
+    atualizarTipoUI();
+  }
+
+  function toggleVtrManual(button) {
+    state.mesa = false;
+    state.vtr = '__manual__';
+
+    const manualWrap = byId('ass_build_vtr_manual_wrap');
+    if (manualWrap) manualWrap.classList.toggle('hidden');
+
+    document.querySelectorAll('#ass_build_vtr_grid .vtr-btn').forEach(btn => btn.classList.remove('btn-primary'));
+    button?.classList.add('btn-primary');
+
+    byId('ass_build_vtr_input')?.focus();
+
+    atualizarModoMesa();
+    atualizarLabelVtr();
+    atualizarTipoUI();
+  }
+
+  function selecionarTipo(button, tipo) {
+    state.tipo = tipo;
+    document.querySelectorAll('.ass-tipo-btn').forEach(btn => btn.classList.remove('btn-primary'));
+    button?.classList.add('btn-primary');
+
+    const manualWrap = byId('ass_build_tipo_manual_wrap');
+    if (manualWrap) manualWrap.classList.toggle('hidden', tipo !== '__manual__');
+    if (tipo === '__manual__') byId('ass_build_tipo_input')?.focus();
+  }
+
+  function atualizarLabel() {
+    atualizarLabelVtr();
+    atualizarTipoUI();
+  }
+
+  function carregarGrupo(button, grupo) {
+    state.ultimoGrupo = grupo;
+    document.querySelectorAll('#ass_build_grupos_grid .vtr-btn').forEach(btn => btn.classList.remove('btn-primary'));
+    button?.classList.add('btn-primary');
+
+    if (grupo === 'efetivo') renderGrupoEfetivo();
+  }
+
+  function toggleManualPol() {
+    byId('ass_build_manual_pol_wrap')?.classList.toggle('hidden');
+  }
+
+  function adicionarManual() {
+    const grad = byId('ass_build_grad_manual')?.value || '';
+    const nomeInput = byId('ass_build_nome_manual');
+    if (!nomeInput) return;
+
+    const nome = nomeInput.value.trim().toUpperCase();
+    if (!nome) return;
+
+    const completo = (grad + ' ' + nome).trim();
+    if (!state.policiaisSelecionados.includes(completo)) {
+      state.policiaisSelecionados.push(completo);
+    }
+
+    nomeInput.value = '';
+    renderPoliciaisSelecionados();
+    if (state.ultimoGrupo === 'efetivo') renderGrupoEfetivo();
+  }
+
+  function adicionarLote() {
+    const vtr = obterVtrAtual();
+    const tipo = obterTipoAtual();
+    const horario = byId('ass_build_horario')?.value || '';
+
+    if (!state.mesa && !vtr) {
+      alert('Selecione ou informe a viatura.');
+      return;
+    }
+
+    if (!state.mesa && !tipo) {
+      alert('Selecione ou informe a escala.');
+      return;
+    }
+
+    if (!state.policiaisSelecionados.length) {
+      alert('Selecione ao menos um policial.');
+      return;
+    }
+
+    state.lotes.push({
+      mesa: state.mesa,
+      vtr,
+      tipo: state.mesa ? 'Recepcao' : tipo,
+      horario,
+      policiais: [...state.policiaisSelecionados]
     });
-    
-    text += `🔹 *Local:* P19\nBom serviço a todos! 👮‍♂️🚓`;
-    return text;
+
+    renderLotes();
+    limparBuilder();
+    atualizarModoMesa();
   }
 
-  function copyText() {
-    const text = generateText();
-    navigator.clipboard.writeText(text).then(() => alert('Texto copiado!'));
+  function removerLote(index) {
+    state.lotes.splice(index, 1);
+    renderLotes();
   }
 
-  function shareWhats() {
-    const text = generateText();
-    window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+  function toggleManual() {
+    const select = byId('ass_horario');
+    const manual = byId('ass_horarioManual');
+    if (!select || !manual) return;
+    manual.classList.toggle('hidden', select.value !== 'MANUAL');
+  }
+
+  function gerarTexto() {
+    const resultado = byId('ass_resultado');
+    if (!resultado) return;
+
+    if (!state.lotes.length) {
+      resultado.textContent = 'Adicione ao menos uma viatura ou recepcao antes de gerar o texto.';
+      byId('ass_result')?.classList.add('visible');
+      return;
+    }
+
+    const horarioSelect = byId('ass_horario')?.value || '';
+    const horarioManual = byId('ass_horarioManual')?.value.trim() || '';
+    const local = byId('ass_localManual')?.value.trim() || byId('ass_local')?.value || 'P19';
+    const horarioServico = horarioSelect === 'MANUAL' ? horarioManual : horarioSelect;
+
+    const linhas = [
+      'Guarnicao iniciando servico.',
+      ''
+    ];
+
+    state.lotes.forEach((lote, index) => {
+      const titulo = lote.mesa
+        ? 'Recepcao do P19'
+        : ('Viatura PM-' + lote.vtr + ' - ' + lote.tipo);
+
+      linhas.push((index + 1) + '. ' + titulo);
+      linhas.push('Policiais: ' + lote.policiais.join(' / '));
+      linhas.push('Horario: ' + lote.horario);
+      linhas.push('');
+    });
+
+    linhas.push('Turno geral: ' + (horarioServico || 'Nao informado'));
+    linhas.push('Localizacao: ' + local);
+
+    resultado.textContent = linhas.join('\n');
+    byId('ass_result')?.classList.add('visible');
   }
 
   return {
     init,
-    setMode,
-    selectVtr,
+    toggleMesa,
+    selecionarVtr,
     toggleVtrManual,
-    selectEscala,
-    toggleEscalaManual,
+    selecionarTipo,
+    atualizarLabel,
+    carregarGrupo,
     toggleManualPol,
-    addPolManual,
-    onHorarioChange,
-    addLote,
-    removeLote,
-    clearAll,
-    copyText,
-    shareWhats
+    adicionarManual,
+    adicionarLote,
+    removerLote,
+    toggleManual,
+    gerarTexto
   };
 })();
 
-/* ---------------------------------------------------------------
-   COMPATIBILIDADE (Aliases Globais)
---------------------------------------------------------------- */
-window.ass_init = PMRV.assuncao.init;
-window.ass_setMode = PMRV.assuncao.setMode;
-window.ass_selectVtr = PMRV.assuncao.selectVtr;
-window.ass_toggleVtrManual = PMRV.assuncao.toggleVtrManual;
-window.ass_selectEscala = PMRV.assuncao.selectEscala;
-window.ass_toggleEscalaManual = PMRV.assuncao.toggleEscalaManual;
-window.ass_toggleManualPol = PMRV.assuncao.toggleManualPol;
-window.ass_addPolManual = PMRV.assuncao.addPolManual;
-window.ass_onHorarioChange = PMRV.assuncao.onHorarioChange;
-window.ass_addLote = PMRV.assuncao.addLote;
-window.ass_removeLote = PMRV.assuncao.removeLote;
-window.ass_clearAll = PMRV.assuncao.clearAll;
-window.ass_copyText = PMRV.assuncao.copyText;
-window.ass_shareWhats = PMRV.assuncao.shareWhats;
+window.ass_toggleMesa = PMRV.assuncao.toggleMesa;
+window.ass_build_selecionarVtr = PMRV.assuncao.selecionarVtr;
+window.ass_build_toggleVtrManual = PMRV.assuncao.toggleVtrManual;
+window.ass_build_selecionarTipo = PMRV.assuncao.selecionarTipo;
+window.ass_build_atualizarLabel = PMRV.assuncao.atualizarLabel;
+window.ass_build_carregarGrupo = PMRV.assuncao.carregarGrupo;
+window.ass_build_toggleManualPol = PMRV.assuncao.toggleManualPol;
+window.ass_build_adicionarManual = PMRV.assuncao.adicionarManual;
+window.ass_adicionarLote = PMRV.assuncao.adicionarLote;
+window.ass_removerLote = PMRV.assuncao.removerLote;
+window.ass_toggleManual = PMRV.assuncao.toggleManual;
+window.ass_gerar = PMRV.assuncao.gerarTexto;
+
+document.addEventListener('DOMContentLoaded', PMRV.assuncao.init);

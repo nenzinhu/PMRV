@@ -11,6 +11,27 @@ const GPS_RODOVIAS_BASE = {
     ]
 };
 
+function gps_setResultado(payload) {
+    const box = document.getElementById('pmrv_gps_result');
+    if (!box) return;
+
+    const latitude = payload && typeof payload.latitude === 'number' ? payload.latitude.toFixed(6) : '---';
+    const longitude = payload && typeof payload.longitude === 'number' ? payload.longitude.toFixed(6) : '---';
+    const accuracy = payload && typeof payload.accuracy === 'number' ? `${payload.accuracy.toFixed(0)} m` : '---';
+    const rodovia = payload && payload.encontrado ? payload.rodovia : 'Não identificada';
+    const km = payload && payload.encontrado && typeof payload.km === 'number'
+        ? payload.km.toFixed(3).replace('.', ',')
+        : '---';
+
+    document.getElementById('pmrv_gps_lat').textContent = latitude;
+    document.getElementById('pmrv_gps_lng').textContent = longitude;
+    document.getElementById('pmrv_gps_acc').textContent = accuracy;
+    document.getElementById('pmrv_gps_rodovia').textContent = rodovia || '---';
+    document.getElementById('pmrv_gps_km').textContent = km;
+    document.getElementById('pmrv_gps_msg').textContent = payload && payload.mensagem ? payload.mensagem : '';
+    box.classList.remove('hidden');
+}
+
 /**
  * Preenche os selects de rodovias do sistema com os dados carregados de SC.
  */
@@ -70,8 +91,8 @@ function gps_obterLocalizacao() {
     }
 
     const btnHome = document.querySelector('.btn-gps-minimal[data-click="gps_obterLocalizacao()"]');
-    const btnForm = document.getElementById('btn-gps-localizar');
-    const activeBtn = btnForm || btnHome;
+    const btnPmrv = document.getElementById('btn-gps-localizar-pmrv');
+    const activeBtn = btnPmrv || btnHome;
     
     let originalText = "";
     if (activeBtn) {
@@ -101,8 +122,24 @@ function gps_obterLocalizacao() {
                     if (typeof pmrv_atualizar === 'function') pmrv_atualizar();
                 }
 
+                gps_setResultado({
+                    latitude,
+                    longitude,
+                    accuracy,
+                    rodovia: resultado.rodovia,
+                    km: resultado.km,
+                    encontrado: true,
+                    mensagem: 'Rodovia e KM mais próximos identificados e preenchidos automaticamente.'
+                });
                 alert(`📍 Localização Identificada!\n\n🛣️ Rodovia: ${resultado.rodovia}\n🏁 KM: ${kmStr}\n\n🎯 Precisão: ${accuracy.toFixed(0)} metros.`);
             } else {
+                gps_setResultado({
+                    latitude,
+                    longitude,
+                    accuracy,
+                    encontrado: false,
+                    mensagem: 'Nenhuma rodovia estadual de SC foi identificada em um raio aproximado de 1 km.'
+                });
                 alert(`Você está em:\nLat: ${latitude.toFixed(5)}\nLng: ${longitude.toFixed(5)}\n\nNenhuma rodovia estadual de SC foi identificada num raio de 1km.`);
             }
 
@@ -117,6 +154,10 @@ function gps_obterLocalizacao() {
             else if (err.code === 2) msg = "Posição indisponível.";
             else if (err.code === 3) msg = "Tempo esgotado.";
             
+            gps_setResultado({
+                encontrado: false,
+                mensagem: msg
+            });
             alert(msg);
             if (activeBtn) {
                 activeBtn.innerHTML = originalText;
@@ -253,8 +294,31 @@ function gps_simularLocalizacao() {
             kmEl.value = resultado.km.toFixed(3).replace('.', ',');
             if (typeof pmrv_atualizar === 'function') pmrv_atualizar();
         }
+        gps_setResultado({
+            latitude: ponto.lat,
+            longitude: ponto.lng,
+            accuracy: 0,
+            rodovia: resultado.rodovia,
+            km: resultado.km,
+            encontrado: true,
+            mensagem: ponto.msg
+        });
         alert('🧪 MODO TESTE\n\n' + ponto.msg + '\n\nRodovia: ' + resultado.rodovia + '\nKM: ' + resultado.km.toFixed(3));
     } else {
+        gps_setResultado({
+            latitude: ponto.lat,
+            longitude: ponto.lng,
+            accuracy: 0,
+            encontrado: false,
+            mensagem: 'Nenhuma rodovia identificada para o ponto de teste.'
+        });
         alert('🧪 MODO TESTE\n\nNenhuma rodovia identificada para os pontos de teste.');
     }
 }
+
+window.gps_preencherSelects = gps_preencherSelects;
+window.gps_obterLocalizacao = gps_obterLocalizacao;
+window.gps_identificarRodoviaKM = gps_identificarRodoviaKM;
+window.gps_simularLocalizacao = gps_simularLocalizacao;
+
+document.addEventListener('DOMContentLoaded', gps_preencherSelects);

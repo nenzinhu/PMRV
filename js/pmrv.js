@@ -114,6 +114,24 @@ function pmrv_mudarSubtipo() {
   pmrv_atualizar();
 }
 
+function pmrv_init() {
+  const rodovia = document.getElementById('pmrv_rodovia');
+  const subtipo = document.getElementById('pmrv_subtipo');
+  if (!rodovia || !subtipo) return;
+
+  if (!rodovia.value) {
+    const fallback = ['SC-400', 'SC-401', 'SC-402', 'SC-403', 'SC-405', 'SC-406', 'SC-281', 'SC-407']
+      .find(value => Array.from(rodovia.options).some(opt => opt.value === value));
+    if (fallback) rodovia.value = fallback;
+  }
+
+  if (!subtipo.value) subtipo.value = '1.1';
+  pmrv_verificarRodovia();
+  pmrv_verificarVitimas();
+  pmrv_toggleSentidoManual();
+  pmrv_mudarSubtipo();
+}
+
 function pmrv_gerarTexto(negrito = false) {
   const b   = negrito ? '*' : '';
   const sade    = document.getElementById('pmrv_sade').value    || '---';
@@ -195,3 +213,7 @@ function pmrv_limpar() {
   pmrv_toggleSentidoManual();
   pmrv_mudarSubtipo();
 }
+
+window.pmrv_init = pmrv_init;
+
+document.addEventListener('DOMContentLoaded', pmrv_init);

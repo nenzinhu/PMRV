@@ -216,8 +216,11 @@
   function mapRecords(rows) {
     const elements = getElements();
     if (!rows.length) return [];
+    
+    // Mapeamento baseado em nomes de colunas conhecidos ou índices padrão (fallback)
     const headers = rows[0].map(normalizeHeader);
-    const indexMap = {
+    
+    const idx = {
       codigo: findHeaderIndex(headers, ['codigo infracao', 'codigo']),
       descricao: findHeaderIndex(headers, ['descricao da infracao', 'descricao infracao', 'descricao']),
       artigo: findHeaderIndex(headers, ['art ctb decreto', 'artigo']),
@@ -227,15 +230,24 @@
       medida: findHeaderIndex(headers, ['medida administrativa', 'medida'])
     };
 
+    // Se não encontrou pelo nome, usa os índices fixos baseados no nosso script de geração
+    if (idx.codigo === -1) idx.codigo = 0;
+    if (idx.descricao === -1) idx.descricao = 1;
+    if (idx.artigo === -1) idx.artigo = 2;
+    if (idx.infrator === -1) idx.infrator = 3;
+    if (idx.valor === -1) idx.valor = 4;
+    if (idx.categoria === -1) idx.categoria = 5;
+    if (idx.medida === -1) idx.medida = 6;
+
     return rows.slice(1).map(row => {
       const record = {
-        codigo: safeText(row[indexMap.codigo] || ''),
-        descricao: safeText(row[indexMap.descricao] || ''),
-        artigo: safeText(row[indexMap.artigo] || ''),
-        infrator: safeText(row[indexMap.infrator] || ''),
-        categoria: normalizeCategory(row[indexMap.categoria] || ''),
-        medida: normalizeMeasure(row[indexMap.medida] || ''),
-        valor: parseValue(row[indexMap.valor] || '')
+        codigo: safeText(row[idx.codigo] || ''),
+        descricao: safeText(row[idx.descricao] || ''),
+        artigo: safeText(row[idx.artigo] || ''),
+        infrator: safeText(row[idx.infrator] || ''),
+        categoria: normalizeCategory(row[idx.categoria] || ''),
+        medida: normalizeMeasure(row[idx.medida] || ''),
+        valor: parseValue(row[idx.valor] || '')
       };
       record.search = buildSearchIndex(record);
       return record;
